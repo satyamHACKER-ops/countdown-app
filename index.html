@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="manifest.json">
+  <title>Countdown Clock</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'Space Mono', monospace; }
+    input::-webkit-calendar-picker-indicator { filter: invert(1); }
+  </style>
+</head>
+
+<body class="w-full min-h-screen flex items-center justify-center p-4"
+      style="background: linear-gradient(rgb(0, 0, 0), rgb(192, 131, 252), rgb(202, 217, 249));">
+
+  <main class="w-full max-w-2xl mx-auto text-center space-y-8">
+    <header>
+      <h1 class="mono text-white font-normal text-5xl sm:text-7xl">
+        Countdown Clock
+      </h1>
+      <p class="mt-2 text-white text-base">Set your target date and time</p>
+    </header>
+
+    <div class="flex flex-wrap items-end justify-center gap-4 mt-12">
+      <div>
+        <label for="date-input" class="block mb-1 text-left text-white text-sm font-medium">Date</label>
+        <input type="date" id="date-input"
+          class="px-3 py-2 bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+      </div>
+
+      <div>
+        <label for="time-input" class="block mb-1 text-left text-white text-sm font-medium">Time</label>
+        <input type="time" id="time-input"
+          class="px-3 py-2 bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="startCountdown()"
+          class="px-5 py-2 font-bold transition transform hover:scale-105 hover:shadow-lg bg-white text-black">
+          Start
+        </button>
+        <button onclick="resetCountdown()"
+          class="px-5 py-2 font-semibold transition transform hover:scale-105 hover:shadow-lg bg-black text-white">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="p-6 bg-white">
+        <div id="num-days" class="text-4xl sm:text-5xl font-bold text-black">00</div>
+        <div class="mt-2 text-black font-medium text-sm">Days</div>
+      </div>
+      <div class="p-6 bg-white">
+        <div id="num-hours" class="text-4xl sm:text-5xl font-bold text-black">00</div>
+        <div class="mt-2 text-black font-medium text-sm">Hours</div>
+      </div>
+      <div class="p-6 bg-white">
+        <div id="num-minutes" class="text-4xl sm:text-5xl font-bold text-black">00</div>
+        <div class="mt-2 text-black font-medium text-sm">Minutes</div>
+      </div>
+      <div class="p-6 bg-white">
+        <div id="num-seconds" class="text-4xl sm:text-5xl font-bold text-black">00</div>
+        <div class="mt-2 text-black font-medium text-sm">Seconds</div>
+      </div>
+    </div>
+
+    <p id="finished-msg" class="mono hidden text-amber-400 font-bold text-3xl">
+      🎉 Time's Up!
+    </p>
+  </main>
+
+  <script>
+    let interval = null;
+
+    function startCountdown() {
+      const d = document.getElementById('date-input').value;
+      const t = document.getElementById('time-input').value || '00:00';
+
+      if (!d) {
+        alert("Please select a date.");
+        return;
+      }
+
+      clearInterval(interval);
+
+      const target = new Date(`${d}T${t}`).getTime();
+
+      if (target <= Date.now()) {
+        alert("Please choose a future date and time.");
+        return;
+      }
+
+      document.getElementById('finished-msg').classList.add('hidden');
+      tick(target);
+      interval = setInterval(() => tick(target), 1000);
+    }
+
+    function tick(target) {
+      const diff = Math.max(0, target - Date.now());
+      const s = Math.floor(diff / 1000);
+
+      document.getElementById('num-days').textContent =
+        String(Math.floor(s / 86400)).padStart(2, '0');
+
+      document.getElementById('num-hours').textContent =
+        String(Math.floor((s % 86400) / 3600)).padStart(2, '0');
+
+      document.getElementById('num-minutes').textContent =
+        String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+
+      document.getElementById('num-seconds').textContent =
+        String(s % 60).padStart(2, '0');
+
+      if (diff <= 0) {
+        clearInterval(interval);
+        interval = null;
+        document.getElementById('finished-msg').classList.remove('hidden');
+      }
+    }
+
+    function resetCountdown() {
+      clearInterval(interval);
+      interval = null;
+
+      ['num-days', 'num-hours', 'num-minutes', 'num-seconds']
+        .forEach(id => document.getElementById(id).textContent = '00');
+
+      document.getElementById('finished-msg').classList.add('hidden');
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js");
+      });
+    }
+  </script>
+</body>
+</html>
